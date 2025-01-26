@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ProjectDisbatch.API.Data;
@@ -11,9 +12,11 @@ using ProjectDisbatch.API.Data;
 namespace ProjectDisbatch.API.Migrations
 {
     [DbContext(typeof(ProjectDisbatchDbContext))]
-    partial class ProjectDisbatchDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250125184730_Seeding Data for Project Types and Departments")]
+    partial class SeedingDataforProjectTypesandDepartments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -77,6 +80,7 @@ namespace ProjectDisbatch.API.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
@@ -93,32 +97,6 @@ namespace ProjectDisbatch.API.Migrations
                     b.HasIndex("ProjectTypeId");
 
                     b.ToTable("Projects");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("9a9cb972-3f9f-4e78-8459-bd52a0b2853a"),
-                            DepartmentId = new Guid("fe4846ac-0060-4cb1-a2ba-74270ad8055c"),
-                            Description = "",
-                            Name = "Project 1",
-                            ProjectTypeId = new Guid("c1b2b207-d7cc-4fff-a637-0fcac3aa7dce")
-                        },
-                        new
-                        {
-                            Id = new Guid("6b452b93-d55f-41f7-8cd3-d20f9726372d"),
-                            DepartmentId = new Guid("994e60b1-778b-4f76-b9f0-ee15c91dd63e"),
-                            Description = "",
-                            Name = "Project 2",
-                            ProjectTypeId = new Guid("c1b2b207-d7cc-4fff-a637-0fcac3aa7dce")
-                        },
-                        new
-                        {
-                            Id = new Guid("ffc3920f-1e35-41dd-9f19-465019868fa3"),
-                            DepartmentId = new Guid("bb7376ed-d846-4a13-962f-0e5f6e7370c5"),
-                            Description = "",
-                            Name = "Project 3",
-                            ProjectTypeId = new Guid("b0770281-e108-4329-83a4-513cd3146eca")
-                        });
                 });
 
             modelBuilder.Entity("ProjectDisbatch.API.Models.Domain.ProjectType", b =>

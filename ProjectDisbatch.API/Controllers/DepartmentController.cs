@@ -1,8 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using ProjectDisbatch.API.CustomActionFilters;
 using ProjectDisbatch.API.Data;
 using ProjectDisbatch.API.Models.Domain;
 using ProjectDisbatch.API.Models.DTO;
+using ProjectDisbatch.API.Repositories;
 
 namespace ProjectDisbatch.API.Controllers
 {
@@ -11,44 +15,25 @@ namespace ProjectDisbatch.API.Controllers
     [ApiController]
     public class DepartmentController : ControllerBase
     {
-        private readonly ProjectDisbatchDbContext dbContext;
+        private readonly IMapper mapper;
+        private readonly IDepartmentRepository departmentRepository;
 
-        public DepartmentController(ProjectDisbatchDbContext dbContext)
+        public DepartmentController(IMapper mapper, IDepartmentRepository departmentRepository)
         {
-            this.dbContext = dbContext;
+            this.mapper = mapper;
+            this.departmentRepository = departmentRepository;
         }
 
         //GET ALL DEPARTMENTS
         //GET: https://localhost:portnumber/api/department
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            //var departments = new List<Department>
-            //{
-            //    new Department
-            //    {
-            //        Id = Guid.NewGuid(),
-            //        Name = "Canada Dept",
-            //        Code = "CAD",
-            //        Description = "Department responsible for managing Canadian projects."
-            //    }
-            //};
-
             //Get Data From Database - Domain Models
-            var departmentsDomain = dbContext.Departments.ToList();
+            var departmentsDomain = await departmentRepository.GetAllAsync();
 
-            //Map Domain Models to DTOs
-            var departmentsDto = new List<DepartmentDto>();
-            foreach (var departmentDomain in departmentsDomain)
-            {
-                departmentsDto.Add(new DepartmentDto
-                {
-                    Id = departmentDomain.Id,
-                    Name = departmentDomain.Name,
-                    Code = departmentDomain.Code,
-                    Description = departmentDomain.Description
-                });
-            }
+            //Map Domain Models to DTOs using automapper
+            var departmentsDto = mapper.Map<List<DepartmentDto>>(departmentsDomain);
 
             //Return DTOs
             return Ok(departmentsDto);
@@ -58,23 +43,17 @@ namespace ProjectDisbatch.API.Controllers
         //GET: https://localhost:portnumber/api/department/{id}
         [HttpGet]
         [Route("{id:Guid}")]
-        public IActionResult GetById([FromRoute] Guid id)
+        public async Task<IActionResult> GetById([FromRoute] Guid id)
         {
             //var region = dbContext.Regions.Find(id); //Find() ONLY TAKES PRIMARY KEY
-            var departmentDomain = dbContext.Departments.FirstOrDefault(x => x.Id == id);
+            var departmentDomain = await departmentRepository.GetByIdAsync(id);
             if (departmentDomain == null)
             {
                 return NotFound();
             }
 
             //Map domain to DTO
-            var departmentDto = new DepartmentDto
-            {
-                Id = departmentDomain.Id,
-                Name = departmentDomain.Name,
-                Code = departmentDomain.Code,
-                Description = departmentDomain.Description
-            };
+            var departmentDto = mapper.Map<DepartmentDto>(departmentDomain);
 
             return Ok(departmentDto);
         }
@@ -82,28 +61,17 @@ namespace ProjectDisbatch.API.Controllers
         //POST Create New Department
         //POST https://localhost:portnumber/api/department
         [HttpPost]
-        public IActionResult Create([FromBody] AddDepartmentRequestDto addDepartmentRequestDto)
+        [ValidateModel]
+        public async Task<IActionResult> Create([FromBody] AddDepartmentRequestDto addDepartmentRequestDto)
         {
             //Map DTO to Domain Model
-            var departmentDomainModel = new Department
-            {
-                Code = addDepartmentRequestDto.Code,
-                Name = addDepartmentRequestDto.Name,
-                Description = addDepartmentRequestDto.Description
-            };
+            var departmentDomainModel = mapper.Map<Department>(addDepartmentRequestDto);
 
             //Use Domain Model to create Department
-            dbContext.Departments.Add(departmentDomainModel);
-            dbContext.SaveChanges();
+            departmentDomainModel = await departmentRepository.CreateAsync(departmentDomainModel);
 
             // Map Domain Model back to DTO
-            var departmentDto = new DepartmentDto
-            {
-                Id = departmentDomainModel.Id,
-                Name = departmentDomainModel.Name,
-                Code = departmentDomainModel.Code,
-                Description = departmentDomainModel.Description
-            };
+            var departmentDto = mapper.Map<DepartmentDto>(departmentDomainModel);
 
             return CreatedAtAction(nameof(GetById), new { id = departmentDto.Id }, departmentDto);
         }
@@ -112,30 +80,23 @@ namespace ProjectDisbatch.API.Controllers
         //PUT: https://localhost:portnumber/api/department/{id}
         [HttpPut]
         [Route("{id:Guid}")]
-        public IActionResult Update([FromRoute] Guid id, [FromBody] UpdateDepartmentRequestDto updateDepartmentRequestDto)
+        [ValidateModel]
+        public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateDepartmentRequestDto updateDepartmentRequestDto)
         {
-            //Check if department exists
-            var departmentDomainModel = dbContext.Departments.FirstOrDefault(x => x.Id == id);
+            // Map DTO to Domain Model
+            var departmentDomainModel = mapper.Map<Department>(updateDepartmentRequestDto);
 
+            //Update Domain Model
+            departmentDomainModel = await departmentRepository.UpdateAsync(id, departmentDomainModel);
+
+            //Check if department exists
             if (departmentDomainModel == null)
             {
                 return NotFound();
             }
 
-            //Map DTO to Domain model
-            departmentDomainModel.Code = updateDepartmentRequestDto.Code;
-            departmentDomainModel.Name = updateDepartmentRequestDto.Name;
-            departmentDomainModel.Description = updateDepartmentRequestDto.Description;
-
-            dbContext.SaveChanges();
-
             //Convert Domain Model to DTO
-            var departmentDto = new DepartmentDto
-            {
-                Name = departmentDomainModel.Name,
-                Code = departmentDomainModel.Code,
-                Description = departmentDomainModel.Description
-            };
+            var departmentDto = mapper.Map<DepartmentDto>(departmentDomainModel);
 
             return Ok(departmentDto);
         }
@@ -144,29 +105,21 @@ namespace ProjectDisbatch.API.Controllers
         //DELETE: https://localhost:portnumber/api/department/{id}
         [HttpDelete]
         [Route("{id:Guid}")]
-        public IActionResult Delete([FromRoute] Guid id)
+        public async Task<IActionResult> Delete([FromRoute] Guid id)
         {
             //Check if department exists
-            var departmentDomainModel = dbContext.Departments.FirstOrDefault(x => x.Id == id);
+            var departmentDomainModel = await departmentRepository.DeleteAsync(id);
+
             if (departmentDomainModel == null)
             {
                 return NotFound();
             }
 
-            //Delete department
-            dbContext.Remove(departmentDomainModel);
-            dbContext.SaveChanges();
-
             //Optional: Return deleted department back
             //Map Domain Model to DTO
-            var departmentDto = new DepartmentDto
-            {
-                Name = departmentDomainModel.Name,
-                Code = departmentDomainModel.Code,
-                Description = departmentDomainModel.Description
-            };
+            var departmentDto = mapper.Map<DepartmentDto>(departmentDomainModel);
 
-            return Ok(departmentDto); 
+            return Ok(departmentDto);
         }
     }
 }
