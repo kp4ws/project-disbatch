@@ -5,7 +5,7 @@ namespace ProjectDisbatch.API.Data
 {
     public class ProjectDisbatchDbContext : DbContext
     {
-        public ProjectDisbatchDbContext(DbContextOptions dbContextOptions) : base(dbContextOptions) //Passes dbContextOptions to base class
+        public ProjectDisbatchDbContext(DbContextOptions<ProjectDisbatchDbContext> dbContextOptions) : base(dbContextOptions) //Passes dbContextOptions to base class
         {
 
         }
@@ -14,6 +14,7 @@ namespace ProjectDisbatch.API.Data
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectType> ProjectTypes { get; set; }
         public DbSet<Department> Departments { get; set; }
+        public DbSet<Image> Images { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

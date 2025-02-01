@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using ProjectDisbatch.API.Data;
 using ProjectDisbatch.API.Models.Domain;
 
@@ -20,10 +21,39 @@ namespace ProjectDisbatch.API.Repositories
             return projectDomainModel;
         }
 
-        public async Task<List<Project>> GetAllAsync()
+        public async Task<List<Project>> GetAllAsync(string? filterOn = null, string? filterQuery = null,
+            string? sortBy = null, bool isAscending = true,
+            int pageNumber = 1, int pageSize = 1000)
         {
+            var projects = dbContext.Projects.Include("Department").Include("ProjectType").AsQueryable();
+
+            //Filtering
+            if (!string.IsNullOrWhiteSpace(filterOn) && !string.IsNullOrWhiteSpace(filterQuery))
+            {
+                //TODO Do we need to sanitize filterOn and filterQuery parameters?
+                if (filterOn.Equals("Name", StringComparison.OrdinalIgnoreCase))
+                {
+                    //NOTE: filterQuery is case sensitive
+                    projects = projects.Where(x => x.Name.Contains(filterQuery));
+                }
+            }
+
+            //Sorting
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                //TODO Do we need to sanitize input parameters?
+                if (sortBy.Equals("Name", StringComparison.OrdinalIgnoreCase))
+                {
+                    projects = isAscending ? projects.OrderBy(x => x.Name) : projects.OrderByDescending(x => x.Name);
+                }
+            }
+
+            //Pagination
+            var skipResults = (pageNumber - 1) * pageSize;
+
+            return await projects.Skip(skipResults).Take(pageSize).ToListAsync();
             //You can make Include typesafe by doing (x => x.Department)
-            return await dbContext.Projects.Include("Department").Include("ProjectType").ToListAsync();
+            //return await dbContext.Projects.Include("Department").Include("ProjectType").ToListAsync();
         }
 
         public async Task<Project?> GetByIdAsync(Guid id)

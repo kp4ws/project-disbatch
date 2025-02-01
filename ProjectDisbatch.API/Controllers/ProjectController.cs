@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ProjectDisbatch.API.CustomActionFilters;
@@ -25,6 +26,7 @@ namespace ProjectDisbatch.API.Controllers
         //CREATE Project
         //POST: /api/project
         [HttpPost]
+        [Authorize(Roles = "Writer")]
         [ValidateModel]
         public async Task<IActionResult> Create([FromBody] AddProjectRequestDto projectRequestDto)
         {
@@ -40,11 +42,17 @@ namespace ProjectDisbatch.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = projectDto.Id }, projectDto);
         }
 
+        //GET PROJECTS
+        //GET: /api/project?filterOn=Name&filterQuery=Name&sortBy=Name&isAscending=true&pageNumber=1&pageSize=10
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        [Authorize(Roles = "Reader,Writer")]
+        public async Task<IActionResult> GetAll([FromQuery] string? filterOn, [FromQuery] string? filterQuery,
+            [FromQuery] string? sortBy, [FromQuery] bool? isAscending,
+            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 1000)
         {
             //Get Domain Models from Database
-            var projectsDomain = await projectRepository.GetAllAsync();
+            var projectsDomain = await projectRepository.GetAllAsync(filterOn, filterQuery,
+                sortBy, isAscending ?? true, pageNumber, pageSize); //if isAscending is nullable then change to true instead
 
             //Map Domain Model to Dto
             var projectDto = mapper.Map<List<ProjectDto>>(projectsDomain);
@@ -54,6 +62,7 @@ namespace ProjectDisbatch.API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Reader,Writer")]
         [Route("{id:Guid}")]
         public async Task<IActionResult> GetById([FromRoute] Guid id)
         {
@@ -73,6 +82,7 @@ namespace ProjectDisbatch.API.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "Writer")]
         [Route("{id:Guid}")]
         [ValidateModel]
         public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateProjectRequestDto updateProjectRequestDto)
@@ -84,7 +94,7 @@ namespace ProjectDisbatch.API.Controllers
             projectDomainModel = await projectRepository.UpdateAsync(id, projectDomainModel);
 
             //Check if exists
-            if(projectDomainModel == null)
+            if (projectDomainModel == null)
             {
                 return NotFound();
             }
@@ -97,6 +107,7 @@ namespace ProjectDisbatch.API.Controllers
         }
 
         [HttpDelete]
+        [Authorize(Roles = "Writer")]
         [Route("{id:Guid}")]
         public async Task<IActionResult> Delete([FromRoute] Guid id)
         {

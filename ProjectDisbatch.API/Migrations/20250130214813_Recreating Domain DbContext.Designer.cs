@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ProjectDisbatch.API.Data;
@@ -11,9 +12,11 @@ using ProjectDisbatch.API.Data;
 namespace ProjectDisbatch.API.Migrations
 {
     [DbContext(typeof(ProjectDisbatchDbContext))]
-    partial class ProjectDisbatchDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250130214813_Recreating Domain DbContext")]
+    partial class RecreatingDomainDbContext
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -65,35 +68,6 @@ namespace ProjectDisbatch.API.Migrations
                             Description = "Responsible for research",
                             Name = "Research"
                         });
-                });
-
-            modelBuilder.Entity("ProjectDisbatch.API.Models.Domain.Image", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("FileDescription")
-                        .HasColumnType("text");
-
-                    b.Property<string>("FileExtension")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<long>("FileSizeInBytes")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Images");
                 });
 
             modelBuilder.Entity("ProjectDisbatch.API.Models.Domain.Project", b =>

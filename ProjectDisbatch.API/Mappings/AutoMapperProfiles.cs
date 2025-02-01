@@ -17,7 +17,7 @@ namespace ProjectDisbatch.API.Mappings
             CreateMap<AddProjectRequestDto, Project>().ReverseMap();
             CreateMap<UpdateProjectRequestDto, Project>().ReverseMap();
 
-            CreateMap<ProjectType, ProjectDto>().ReverseMap();
+            CreateMap<ProjectType, ProjectTypeDto>().ReverseMap();
         }
     }
 }

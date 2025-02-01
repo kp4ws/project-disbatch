@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,7 @@ namespace ProjectDisbatch.API.Controllers
         //GET ALL DEPARTMENTS
         //GET: https://localhost:portnumber/api/department
         [HttpGet]
+        [Authorize(Roles = "Reader,Writer")]
         public async Task<IActionResult> GetAll()
         {
             //Get Data From Database - Domain Models
@@ -42,6 +44,7 @@ namespace ProjectDisbatch.API.Controllers
         //GET SINGLE DEPARTMENT (By ID)
         //GET: https://localhost:portnumber/api/department/{id}
         [HttpGet]
+        [Authorize(Roles = "Reader,Writer")]
         [Route("{id:Guid}")]
         public async Task<IActionResult> GetById([FromRoute] Guid id)
         {
@@ -61,6 +64,7 @@ namespace ProjectDisbatch.API.Controllers
         //POST Create New Department
         //POST https://localhost:portnumber/api/department
         [HttpPost]
+        [Authorize(Roles = "Writer")]
         [ValidateModel]
         public async Task<IActionResult> Create([FromBody] AddDepartmentRequestDto addDepartmentRequestDto)
         {
@@ -79,6 +83,7 @@ namespace ProjectDisbatch.API.Controllers
         //Update Department
         //PUT: https://localhost:portnumber/api/department/{id}
         [HttpPut]
+        [Authorize(Roles = "Writer")]
         [Route("{id:Guid}")]
         [ValidateModel]
         public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateDepartmentRequestDto updateDepartmentRequestDto)
@@ -104,6 +109,7 @@ namespace ProjectDisbatch.API.Controllers
         //Delete Department
         //DELETE: https://localhost:portnumber/api/department/{id}
         [HttpDelete]
+        [Authorize(Roles = "Writer")]
         [Route("{id:Guid}")]
         public async Task<IActionResult> Delete([FromRoute] Guid id)
         {
