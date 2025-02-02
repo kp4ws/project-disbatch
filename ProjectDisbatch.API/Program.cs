@@ -7,12 +7,15 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
@@ -61,21 +64,23 @@ options.UseNpgsql(builder.Configuration.GetConnectionString("ProjectDisbatchAuth
 builder.Services.AddScoped<IDepartmentRepository, NpgSqlDepartmentRepository>();
 builder.Services.AddScoped<IProjectRepository, NpgSqlProjectRepository>();
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
+builder.Services.AddScoped<IImageRepository, LocalImageRepository>();
 
 builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
-//TODO enable CORS for given client website URL
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowLocalHost",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:5173")
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials();
-        });
-});
+//TODO revisit
+//enable CORS for given client website URL
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowLocalHost",
+//        policy =>
+//        {
+//            policy.WithOrigins("http://localhost:5173")
+//            .AllowAnyMethod()
+//            .AllowAnyHeader()
+//            .AllowCredentials();
+//        });
+//});
 
 builder.Services.AddIdentityCore<IdentityUser>().
     AddRoles<IdentityRole>()
@@ -112,7 +117,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 var app = builder.Build();
 
 //TODO revisit
-app.UseCors("AllowLocalHost");
+//app.UseCors("AllowLocalHost");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -125,6 +130,14 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+//Allows ASP NET to serve static files
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Images")),
+    RequestPath = "/Images"
+    //https://localhost:portnumber/Images
+});
 
 app.MapControllers();
 

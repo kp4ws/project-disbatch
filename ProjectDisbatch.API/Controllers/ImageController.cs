@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ProjectDisbatch.API.Models.Domain;
 using ProjectDisbatch.API.Models.DTO;
+using ProjectDisbatch.API.Repositories;
 
 namespace ProjectDisbatch.API.Controllers
 {
@@ -9,6 +11,13 @@ namespace ProjectDisbatch.API.Controllers
     [ApiController]
     public class ImageController : ControllerBase
     {
+        private readonly IImageRepository imageRepository;
+
+        public ImageController(IImageRepository imageRepository)
+        {
+            this.imageRepository = imageRepository;
+        }
+
         //POST: /api/Images/Upload
         [HttpPost]
         [Authorize(Roles = "Writer")]
@@ -20,7 +29,29 @@ namespace ProjectDisbatch.API.Controllers
             if (ModelState.IsValid)
             {
                 //Convert DTO to Domain Model
+                var imageDomainModel = new Image
+                {
+                    File = imageUploadRequestDto.File,
+                    FileExtension = Path.GetExtension(imageUploadRequestDto.File.FileName),
+                    FileSizeInBytes = imageUploadRequestDto.File.Length,
+                    FileName = imageUploadRequestDto.FileName,
+                    FileDescription = imageUploadRequestDto.FileDescription
+                };
 
+                imageDomainModel = await imageRepository.UploadAsync(imageDomainModel);
+
+                var imageDto = new ImageDto
+                {
+                    Id = imageDomainModel.Id,
+                    File = imageDomainModel.File,
+                    FileName = imageDomainModel.FileName,
+                    FileDescription = imageDomainModel.FileDescription,
+                    FileExtension = imageDomainModel.FileExtension,
+                    FileSizeInBytes = imageDomainModel.FileSizeInBytes,
+                    FilePath = imageDomainModel.FilePath
+                };
+
+                return Ok(imageDto);
             }
 
             return BadRequest(ModelState);
