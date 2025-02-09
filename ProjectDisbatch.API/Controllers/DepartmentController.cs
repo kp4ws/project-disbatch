@@ -8,6 +8,7 @@ using ProjectDisbatch.API.Data;
 using ProjectDisbatch.API.Models.Domain;
 using ProjectDisbatch.API.Models.DTO;
 using ProjectDisbatch.API.Repositories;
+using System.Text.Json;
 
 namespace ProjectDisbatch.API.Controllers
 {
@@ -18,24 +19,32 @@ namespace ProjectDisbatch.API.Controllers
     {
         private readonly IMapper mapper;
         private readonly IDepartmentRepository departmentRepository;
+        private readonly ILogger<DepartmentController> logger;
 
-        public DepartmentController(IMapper mapper, IDepartmentRepository departmentRepository)
+        public DepartmentController(IMapper mapper, IDepartmentRepository departmentRepository, ILogger<DepartmentController> logger)
         {
             this.mapper = mapper;
             this.departmentRepository = departmentRepository;
+            this.logger = logger;
         }
 
         //GET ALL DEPARTMENTS
         //GET: https://localhost:portnumber/api/department
         [HttpGet]
-        [Authorize(Roles = "Reader,Writer")]
+        //[Authorize(Roles = "Reader,Writer")] TODO Renable this later
         public async Task<IActionResult> GetAll()
         {
+            logger.LogInformation("GetAll Department Action Method was Invoked");
+
+            //logger.LogWarning("This is a warning");
+
             //Get Data From Database - Domain Models
             var departmentsDomain = await departmentRepository.GetAllAsync();
 
             //Map Domain Models to DTOs using automapper
             var departmentsDto = mapper.Map<List<DepartmentDto>>(departmentsDomain);
+
+            logger.LogInformation($"GetAll Department finished with data: {JsonSerializer.Serialize(departmentsDto)}");
 
             //Return DTOs
             return Ok(departmentsDto);
@@ -44,7 +53,7 @@ namespace ProjectDisbatch.API.Controllers
         //GET SINGLE DEPARTMENT (By ID)
         //GET: https://localhost:portnumber/api/department/{id}
         [HttpGet]
-        [Authorize(Roles = "Reader,Writer")]
+        //[Authorize(Roles = "Reader,Writer")]
         [Route("{id:Guid}")]
         public async Task<IActionResult> GetById([FromRoute] Guid id)
         {
@@ -64,7 +73,7 @@ namespace ProjectDisbatch.API.Controllers
         //POST Create New Department
         //POST https://localhost:portnumber/api/department
         [HttpPost]
-        [Authorize(Roles = "Writer")]
+        //[Authorize(Roles = "Writer")]
         [ValidateModel]
         public async Task<IActionResult> Create([FromBody] AddDepartmentRequestDto addDepartmentRequestDto)
         {
@@ -83,7 +92,7 @@ namespace ProjectDisbatch.API.Controllers
         //Update Department
         //PUT: https://localhost:portnumber/api/department/{id}
         [HttpPut]
-        [Authorize(Roles = "Writer")]
+        //[Authorize(Roles = "Writer")]
         [Route("{id:Guid}")]
         [ValidateModel]
         public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateDepartmentRequestDto updateDepartmentRequestDto)
@@ -109,7 +118,7 @@ namespace ProjectDisbatch.API.Controllers
         //Delete Department
         //DELETE: https://localhost:portnumber/api/department/{id}
         [HttpDelete]
-        [Authorize(Roles = "Writer")]
+        //[Authorize(Roles = "Writer")]
         [Route("{id:Guid}")]
         public async Task<IActionResult> Delete([FromRoute] Guid id)
         {

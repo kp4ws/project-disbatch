@@ -3,17 +3,35 @@ using Microsoft.EntityFrameworkCore;
 using ProjectDisbatch.API.Data;
 using ProjectDisbatch.API.Mappings;
 using ProjectDisbatch.API.Repositories;
+using ProjectDisbatch.API.Middlewares;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.FileProviders;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+//Add logging to application
+var logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/ProjectDisbatch_Log.txt", rollingInterval: RollingInterval.Day)
+    .MinimumLevel.Information() //Change this as needed depending on what levels you want to be logged
+    .CreateLogger();
+
+//Clear out any existing providers
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger);
+
+
 builder.Services.AddControllers();
+
+//TODO Add versioning to API
+//builder.Services.AddApiVersioning();
+
 builder.Services.AddHttpContextAccessor();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -125,6 +143,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<ExceptionHandlerMiddleware>();
 
 app.UseHttpsRedirection();
 
